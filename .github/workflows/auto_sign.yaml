@@ -31,5 +31,4 @@ jobs:
           BARK_KEY: ${{ secrets.BARK_KEY }}
           BARK_SERVER: ${{ vars.BARK_SERVER }}
         run: |
-          cd longfor-sign
           python main.py
