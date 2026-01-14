@@ -26,7 +26,6 @@ jobs:
         env:
           LONGFOR_TOKEN: ${{ secrets.LONGFOR_TOKEN }}
           LONGFOR_DXRISK_TOKEN: ${{ secrets.LONGFOR_DXRISK_TOKEN }}
-          LONGFOR_ACTIVITY_NO: ${{ vars.LONGFOR_ACTIVITY_NO }}
           BARK_KEY: ${{ secrets.BARK_KEY }}
           BARK_SERVER: ${{ vars.BARK_SERVER }}
         run: |

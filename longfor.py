@@ -10,7 +10,7 @@ def longfor_sign():
 
     token = os.environ.get("LONGFOR_TOKEN", "")
     dxrisk_token = os.environ.get("LONGFOR_DXRISK_TOKEN", "")
-    activity_no = os.environ.get("LONGFOR_ACTIVITY_NO", "11111111111686241863606037740000")
+    activity_no = "11111111111686241863606037740000"
 
     headers = {
         "Accept": "application/json, text/plain, */*",
