@@ -2,14 +2,11 @@ import os
 import requests
 
 
-def longfor_sign():
+def longfor_sign_single(token: str, dxrisk_token: str):
     """
-    执行龙湖天街每日签到
+    执行单个token的龙湖天街每日签到
     """
     url = "https://gw2c-hw-open.longfor.com/lmarketing-task-api-mvc-prod/openapi/task/v1/signature/clock"
-
-    token = os.environ.get("LONGFOR_TOKEN", "")
-    dxrisk_token = os.environ.get("LONGFOR_DXRISK_TOKEN", "")
     activity_no = "11111111111686241863606037740000"
 
     headers = {
@@ -46,6 +43,51 @@ def longfor_sign():
         return True, msg
     else:
         return False, f"【龙湖天街】签到失败: {data}"
+
+
+def longfor_sign():
+    """
+    执行龙湖天街每日签到（支持多个token，换行分隔）
+    """
+    token_str = os.environ.get("LONGFOR_TOKEN", "").strip()
+    dxrisk_token_str = os.environ.get("LONGFOR_DXRISK_TOKEN", "").strip()
+    
+    if not token_str:
+        return False, "未配置 LONGFOR_TOKEN"
+    
+    # 按换行符分割token，过滤空行
+    tokens = [t.strip() for t in token_str.split("\n") if t.strip()]
+    dxrisk_tokens = [t.strip() for t in dxrisk_token_str.split("\n") if t.strip()] if dxrisk_token_str else []
+    
+    if not tokens:
+        return False, "LONGFOR_TOKEN 为空"
+    
+    # 如果只有一个token，保持向后兼容
+    if len(tokens) == 1:
+        dxrisk_token = dxrisk_tokens[0] if dxrisk_tokens else ""
+        success, msg = longfor_sign_single(tokens[0], dxrisk_token)
+        return success, msg, 1 if success else 0, 1
+    
+    # 多个token的情况
+    results = []
+    success_count = 0
+    total_count = len(tokens)
+    
+    for i, token in enumerate(tokens):
+        # 获取对应的dxrisk_token，如果没有足够的则使用第一个或空字符串
+        dxrisk_token = dxrisk_tokens[i] if i < len(dxrisk_tokens) else (dxrisk_tokens[0] if dxrisk_tokens else "")
+        
+        print(f"\n处理第 {i+1}/{len(tokens)} 个账号...")
+        success, msg = longfor_sign_single(token, dxrisk_token)
+        results.append(f"账号{i+1}: {msg}")
+        
+        if success:
+            success_count += 1
+    
+    combined_msg = "\n".join(results)
+    # 返回成功状态和详细信息（包含成功数量）
+    all_success = (success_count == total_count)
+    return all_success, combined_msg, success_count, total_count
 
 
 if __name__ == "__main__":
