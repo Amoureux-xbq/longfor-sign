@@ -1,0 +1,49 @@
+name: 龙湖天街自动签到
+
+on:
+  # 定时任务：每天 9 点触发，然后随机延迟 0-6 小时（即 9-15 点之间随机运行）
+  # UTC 时间：1 点（UTC+8 = 北京时间 9 点）
+  schedule:
+    - cron: '0 1 * * *'  # 北京时间 9:00 触发
+  
+  # 允许手动触发
+  workflow_dispatch:
+
+jobs:
+  sign-in:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+      
+      - name: 设置 Python 环境
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: 安装依赖
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: 随机延迟（9-15点之间随机）
+        run: |
+          # 随机延迟 0-6 小时（21600 秒）
+          DELAY=$((RANDOM % 21600))
+          HOURS=$((DELAY / 3600))
+          MINUTES=$(((DELAY % 3600) / 60))
+          SECONDS=$((DELAY % 60))
+          echo "随机延迟: ${HOURS}小时 ${MINUTES}分钟 ${SECONDS}秒"
+          echo "预计运行时间: 北京时间 $((9 + HOURS)):${MINUTES}"
+          sleep $DELAY
+      
+      - name: 执行签到
+        env:
+          LONGFOR_TOKEN: ${{ secrets.LONGFOR_TOKEN }}
+          LONGFOR_DXRISK_TOKEN: ${{ secrets.LONGFOR_DXRISK_TOKEN }}
+          BARK_KEY: ${{ secrets.BARK_KEY }}
+          BARK_SERVER: ${{ vars.BARK_SERVER }}
+        run: |
+          python main.py

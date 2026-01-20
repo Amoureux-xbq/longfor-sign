@@ -2,9 +2,14 @@ import os
 import requests
 
 
-def longfor_sign_single(token: str, dxrisk_token: str):
+def longfor_sign_single(token: str, dxrisk_token: str, max_retry: int = 2):
     """
     执行单个token的龙湖天街每日签到
+    
+    Args:
+        token: 用户token
+        dxrisk_token: 风控token
+        max_retry: 遇到验证码时的最大重试次数
     """
     url = "https://gw2c-hw-open.longfor.com/lmarketing-task-api-mvc-prod/openapi/task/v1/signature/clock"
     activity_no = "11111111111686241863606037740000"
@@ -14,7 +19,7 @@ def longfor_sign_single(token: str, dxrisk_token: str):
         "Content-Type": "application/json;charset=UTF-8",
         "Origin": "https://longzhu.longfor.com",
         "Referer": "https://longzhu.longfor.com/",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Mac MacWechat/WMPF MacWechat/3.8.7(0x13080712) UnifiedPCMacWechat(0xf264162f) XWEB/18152 miniProgram/wx50282644351869da",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.67(0x18004330) NetType/WIFI Language/en miniProgram/wx50282644351869da",
         "token": token,
         "X-LF-UserToken": token,
         "X-GAIA-API-KEY": "c06753f1-3e68-437d-b592-b94656ea5517",
@@ -28,21 +33,66 @@ def longfor_sign_single(token: str, dxrisk_token: str):
         "activity_no": activity_no
     }
 
-    resp = requests.post(url, headers=headers, json=json_data, timeout=10)
-    print("status:", resp.status_code)
-    print("body:", resp.text)
+    for attempt in range(max_retry):
+        resp = requests.post(url, headers=headers, json=json_data, timeout=10)
+        print(f"status: {resp.status_code}")
+        print(f"body: {resp.text}")
 
-    try:
-        data = resp.json()
-    except Exception:
-        return False, "返回不是 JSON"
+        try:
+            data = resp.json()
+        except Exception:
+            return False, "返回不是 JSON"
 
-    if data.get("code") == "0000":
-        reward_info = data.get("data", {}).get("reward_info", [])
-        msg = f"【龙湖天街】签到成功: {reward_info or '无（可能当日已签到）'}"
-        return True, msg
-    else:
+        # 签到成功
+        if data.get("code") == "0000":
+            reward_info = data.get("data", {}).get("reward_info", [])
+            msg = f"【龙湖天街】签到成功: {reward_info or '无（可能当日已签到）'}"
+            return True, msg
+        
+        # 检查是否需要验证码
+        error_code = data.get("code")
+        error_msg = data.get("message", "")
+        
+        # 可能触发验证码的错误码（根据实际情况调整）
+        needs_captcha = (
+            error_code == "8040012" or  # 网络故障，请稍后再试 (触发验证码)
+            error_code == "8040016" or  # 也可能是这个
+            "验证" in error_msg or
+            "滑块" in error_msg or
+            "人机" in error_msg
+        )
+        
+        if needs_captcha and attempt < max_retry - 1:
+            print(f"\n⚠️  检测到需要验证码，尝试自动处理... (尝试 {attempt + 1}/{max_retry})")
+            
+            try:
+                # 导入验证码处理器
+                from captcha_handler import CaptchaHandler
+                
+                handler = CaptchaHandler(token, dxrisk_token)
+                captcha_token = handler.handle_captcha_if_needed()
+                
+                if captcha_token:
+                    # 验证码通过，更新请求头
+                    print(f"✓ 验证码处理成功，获得token: {captcha_token[:20]}...")
+                    headers["X-LF-DXRisk-Captcha-Token"] = captcha_token
+                    headers["X-LF-DXRisk-Source"] = "5"
+                    
+                    # 继续下一次尝试
+                    continue
+                else:
+                    print(f"✗ 验证码处理失败")
+                    
+            except ImportError:
+                print("✗ 验证码处理模块未安装，请先实现 captcha_handler.py")
+                return False, f"【龙湖天街】需要验证码，但自动处理失败: {data}"
+            except Exception as e:
+                print(f"✗ 验证码处理出错: {e}")
+        
+        # 其他错误或最后一次尝试失败
         return False, f"【龙湖天街】签到失败: {data}"
+    
+    return False, f"【龙湖天街】签到失败，已重试{max_retry}次"
 
 
 def longfor_sign():

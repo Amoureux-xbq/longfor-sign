@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 虚拟环境
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 临时文件
+*.png
+*.jpg
+*.jpeg
+*.gif
+debug_*.png
+debug_*.jpg
+*_temp.*
+bg_temp*
+slider_temp*
+
+# 日志
+*.log
+
+# 配置文件（包含敏感信息）
+config.json
+.env
+*.secret
+
+# 测试文件
+test_*.py
+debug_*.py
+
+# Node.js (如果有)
+node_modules/
+package-lock.json
+
+# 缓存
+.cache/
+*.cache
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# 备份文件
+*.bak
+*.backup
