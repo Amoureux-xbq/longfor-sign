@@ -28,17 +28,6 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
       
-      - name: 随机延迟（9-15点之间随机）
-        run: |
-          # 随机延迟 0-6 小时（21600 秒）
-          DELAY=$((RANDOM % 21600))
-          HOURS=$((DELAY / 3600))
-          MINUTES=$(((DELAY % 3600) / 60))
-          SECONDS=$((DELAY % 60))
-          echo "随机延迟: ${HOURS}小时 ${MINUTES}分钟 ${SECONDS}秒"
-          echo "预计运行时间: 北京时间 $((9 + HOURS)):${MINUTES}"
-          sleep $DELAY
-      
       - name: 执行签到
         env:
           LONGFOR_TOKEN: ${{ secrets.LONGFOR_TOKEN }}
