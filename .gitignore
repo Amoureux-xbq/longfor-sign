@@ -44,6 +44,9 @@ debug_*.jpg
 bg_temp*
 slider_temp*
 
+# 验证码图片收集目录（由 GitHub Actions 上传）
+captcha_collection/
+
 # 日志
 *.log
 

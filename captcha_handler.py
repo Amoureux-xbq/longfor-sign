@@ -5,10 +5,17 @@ import requests
 import time
 import random
 import hashlib
+import os
+import shutil
+from datetime import datetime
 from typing import Optional, Dict, Tuple
 from image_recognition_v2 import find_gap_position, download_images
-from trajectory import generate_trajectory, add_shake_at_end
+from trajectory_enhanced import generate_realistic_trajectory
 from ac_encoder_full import generate_ac
+
+# 是否保存验证码图片用于分析（通过环境变量控制）
+SAVE_CAPTCHA_IMAGES = os.getenv('SAVE_CAPTCHA_IMAGES', 'false').lower() == 'true'
+CAPTCHA_IMAGES_DIR = 'captcha_collection'
 
 
 class CaptchaHandler:
@@ -23,6 +30,47 @@ class CaptchaHandler:
         self.app_id = "d1a43734fc59aeae9f1562dbd70fdf54"  # 从你的抓包中获取
         self.api_base = "https://ly-ver.longhu.net/api"
         self.uv_check_url = "https://devops-prod.longfor.com/v2/api/uv/type"
+    
+    def _save_captcha_images(self, bg_path: str, slider_path: str, result: dict = None):
+        """
+        保存验证码图片用于后续分析
+        
+        Args:
+            bg_path: 背景图路径（还原后的）
+            slider_path: 滑块图路径
+            result: 验证结果（包含 x, y 坐标等信息）
+        """
+        if not SAVE_CAPTCHA_IMAGES:
+            return
+        
+        try:
+            # 创建保存目录
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            save_dir = os.path.join(CAPTCHA_IMAGES_DIR, timestamp)
+            os.makedirs(save_dir, exist_ok=True)
+            
+            # 复制背景图
+            if os.path.exists(bg_path):
+                shutil.copy(bg_path, os.path.join(save_dir, 'bg_restored.png'))
+            
+            # 复制滑块图
+            if os.path.exists(slider_path):
+                shutil.copy(slider_path, os.path.join(save_dir, 'slider.png'))
+            
+            # 保存识别结果信息
+            if result:
+                info_path = os.path.join(save_dir, 'info.txt')
+                with open(info_path, 'w', encoding='utf-8') as f:
+                    f.write(f"时间: {timestamp}\n")
+                    f.write(f"X 坐标: {result.get('x', 'N/A')}\n")
+                    f.write(f"Y 坐标: {result.get('y', 'N/A')}\n")
+                    f.write(f"验证结果: {result.get('success', 'N/A')}\n")
+                    f.write(f"错误信息: {result.get('msg', 'N/A')}\n")
+            
+            print(f"   📦 验证码图片已保存: {save_dir}")
+        
+        except Exception as e:
+            print(f"   ⚠️  保存验证码图片失败: {e}")
         
     def _generate_aid(self) -> str:
         """生成aid (设备指纹)"""
@@ -249,12 +297,13 @@ class CaptchaHandler:
             print(f"   ✗ 识别失败: {e}")
             return None
         
-        # 4. 生成轨迹
+        # 4. 生成轨迹（使用增强版）
         print("4️⃣ 正在生成滑动轨迹...")
         try:
-            trajectory = generate_trajectory(x)
-            trajectory = add_shake_at_end(trajectory)
+            trajectory = generate_realistic_trajectory(x)
+            duration_ms = trajectory[-1][2] - trajectory[0][2]
             print(f"   ✓ 生成 {len(trajectory)} 个轨迹点")
+            print(f"   ✓ 总时长: {duration_ms}ms")
         except Exception as e:
             print(f"   ✗ 轨迹生成失败: {e}")
             return None
@@ -302,6 +351,18 @@ class CaptchaHandler:
             
             result = response.json()
             print(f"   验证响应: {result}")
+            
+            # 保存验证码图片（如果启用）
+            self._save_captcha_images(
+                bg_path, 
+                slider_path, 
+                {
+                    'x': final_x, 
+                    'y': final_y, 
+                    'success': result.get('success'),
+                    'msg': result.get('msg')
+                }
+            )
             
             if result.get('success'):
                 token = result.get('token')

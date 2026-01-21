@@ -7,7 +7,7 @@
 import sys
 import os
 from image_recognition_v2 import find_gap_position
-from trajectory import generate_trajectory, add_shake_at_end
+from trajectory_enhanced import generate_realistic_trajectory
 from ac_encoder_full import generate_ac
 
 def calculate_captcha_params(bg_image_path: str, slider_image_path: str, server_y: int = None, debug: bool = True):
@@ -72,11 +72,12 @@ def calculate_captcha_params(bg_image_path: str, slider_image_path: str, server_
         print(f"\n2️⃣ 正在生成滑动轨迹...")
     
     try:
-        trajectory = generate_trajectory(x)
-        trajectory = add_shake_at_end(trajectory)
+        trajectory = generate_realistic_trajectory(x)
+        duration_ms = trajectory[-1][2] - trajectory[0][2]
         
         if debug:
             print(f"   ✓ 生成 {len(trajectory)} 个轨迹点")
+            print(f"   ✓ 总时长: {duration_ms}ms")
             print(f"   - 前5个点: {trajectory[:5]}")
             print(f"   - 后5个点: {trajectory[-5:]}")
         

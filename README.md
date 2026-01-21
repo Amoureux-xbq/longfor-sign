@@ -94,12 +94,14 @@ longfor-sign/
 ├── trajectory.py                # 轨迹生成
 ├── decode_o_string.py          # 切片顺序解码
 ├── restore_correct.py          # 图像还原
+├── calculate_xy.py             # X/Y 坐标计算工具 🆕
 ├── bark_notify.py              # Bark 推送通知
 ├── requirements.txt            # Python 依赖
 ├── .github/workflows/          # GitHub Actions 配置
 │   └── daily-sign.yml         # 定时签到工作流
 ├── README.md                   # 本文件
 ├── GITHUB_ACTIONS_SETUP.md    # GitHub Actions 详细配置
+├── CALCULATE_XY_USAGE.md      # X/Y 坐标计算工具使用指南 🆕
 └── AC_ENCODER_README.md       # AC 参数技术文档
 ```
 
@@ -191,6 +193,24 @@ longfor-sign/
 ---
 
 ## 📝 本地测试
+
+### 快速计算 x, y 坐标
+
+```bash
+# 计算滑动距离和垂直位置
+python calculate_xy.py <背景图> <滑块图> [方法]
+
+# 示例
+python calculate_xy.py restored_bg.jpg slider.png shape
+python calculate_xy.py restored_bg.jpg slider.png auto
+```
+
+**参数说明**：
+- `背景图`：需要先使用 `restore_correct.py` 还原的完整背景图
+- `滑块图`：PNG 格式的滑块图片
+- `方法`：可选，`shape`（推荐）/`auto`/`contour`/`color`
+
+详细说明见：[CALCULATE_XY_USAGE.md](./CALCULATE_XY_USAGE.md)
 
 ### 测试图像识别
 

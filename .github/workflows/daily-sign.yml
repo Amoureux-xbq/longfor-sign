@@ -1,38 +1,48 @@
 name: 龙湖天街自动签到
 
 on:
-  # 定时任务：每天 9 点触发，然后随机延迟 0-6 小时（即 9-15 点之间随机运行）
+  # 定时任务：每天 9 点触发
   # UTC 时间：1 点（UTC+8 = 北京时间 9 点）
   schedule:
     - cron: '0 1 * * *'  # 北京时间 9:00 触发
-  
+
   # 允许手动触发
   workflow_dispatch:
 
 jobs:
   sign-in:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: 检出代码
         uses: actions/checkout@v3
-      
+
       - name: 设置 Python 环境
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
           cache: 'pip'
-      
+
       - name: 安装依赖
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-      
+
       - name: 执行签到
         env:
           LONGFOR_TOKEN: ${{ secrets.LONGFOR_TOKEN }}
           LONGFOR_DXRISK_TOKEN: ${{ secrets.LONGFOR_DXRISK_TOKEN }}
           BARK_KEY: ${{ secrets.BARK_KEY }}
           BARK_SERVER: ${{ vars.BARK_SERVER }}
+          SAVE_CAPTCHA_IMAGES: 'true'  # 启用图片保存功能
         run: |
           python main.py
+      
+      - name: 上传验证码图片
+        if: always()  # 即使签到失败也上传
+        uses: actions/upload-artifact@v3
+        with:
+          name: captcha-images-${{ github.run_number }}
+          path: captcha_collection/
+          retention-days: 30  # 保留30天
+          if-no-files-found: ignore  # 如果没有文件也不报错
