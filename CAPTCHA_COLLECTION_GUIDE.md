@@ -126,7 +126,7 @@ captcha-images-123.zip
 
 - name: 上传验证码图片
   if: always()                    # 即使失败也上传
-  uses: actions/upload-artifact@v3
+  uses: actions/upload-artifact@v4
   with:
     name: captcha-images-${{ github.run_number }}
     path: captcha_collection/
