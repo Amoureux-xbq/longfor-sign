@@ -62,7 +62,7 @@ def longfor_sign_single(token: str, dxrisk_token: str, max_retry: int = 2):
             "人机" in error_msg
         )
         
-        if needs_captcha and attempt < max_retry - 1:
+        if needs_captcha:
             print(f"\n⚠️  检测到需要验证码，尝试自动处理... (尝试 {attempt + 1}/{max_retry})")
             
             try:
@@ -82,14 +82,26 @@ def longfor_sign_single(token: str, dxrisk_token: str, max_retry: int = 2):
                     continue
                 else:
                     print(f"✗ 验证码处理失败")
+                    # 如果不是最后一次尝试，继续重试
+                    if attempt < max_retry - 1:
+                        print(f"  将在下一次循环中重试...")
+                        continue
+                    # 最后一次尝试失败，返回错误
+                    return False, f"【龙湖天街】验证码处理失败，已重试{max_retry}次"
                     
             except ImportError:
                 print("✗ 验证码处理模块未安装，请先实现 captcha_handler.py")
                 return False, f"【龙湖天街】需要验证码，但自动处理失败: {data}"
             except Exception as e:
                 print(f"✗ 验证码处理出错: {e}")
+                # 如果不是最后一次尝试，继续重试
+                if attempt < max_retry - 1:
+                    print(f"  将在下一次循环中重试...")
+                    continue
+                # 最后一次尝试失败，返回错误
+                return False, f"【龙湖天街】验证码处理异常: {str(e)}"
         
-        # 其他错误或最后一次尝试失败
+        # 其他错误（不需要验证码的情况），直接返回失败
         return False, f"【龙湖天街】签到失败: {data}"
     
     return False, f"【龙湖天街】签到失败，已重试{max_retry}次"
