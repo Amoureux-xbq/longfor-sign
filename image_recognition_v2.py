@@ -87,7 +87,7 @@ def find_gap_position_v2(bg_image_path: str, slider_image_path: str, debug: bool
     
     # 6. 应用偏移修正
     # 滑块起始位置的偏移量
-    OFFSET = 55
+    OFFSET = 57
     x_detected = x
     x_adjusted = max(0, x - OFFSET)
     
