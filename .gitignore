@@ -38,6 +38,7 @@ env/
 *.jpg
 *.jpeg
 *.gif
+*.txt
 debug_*.png
 debug_*.jpg
 *_temp.*

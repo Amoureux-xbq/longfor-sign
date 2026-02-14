@@ -78,8 +78,30 @@ def longfor_sign_single(token: str, dxrisk_token: str, max_retry: int = 2):
                     headers["X-LF-DXRisk-Captcha-Token"] = captcha_token
                     headers["X-LF-DXRisk-Source"] = "5"
                     
-                    # 继续下一次尝试
-                    continue
+                    # 立即使用新token重新发送签到请求
+                    print(f"\n📤 使用验证码token重新发送签到请求...")
+                    resp = requests.post(url, headers=headers, json=json_data, timeout=10)
+                    print(f"status: {resp.status_code}")
+                    print(f"body: {resp.text}")
+                    
+                    try:
+                        data = resp.json()
+                        if data.get("code") == "0000":
+                            reward_info = data.get("data", {}).get("reward_info", [])
+                            msg = f"【龙湖天街】签到成功: {reward_info or '无（可能当日已签到）'}"
+                            return True, msg
+                        else:
+                            # 即使有验证码token，签到仍然失败
+                            print(f"✗ 使用验证码token签到仍失败: {data}")
+                            if attempt < max_retry - 1:
+                                print(f"  将在下一次循环中重试...")
+                                continue
+                            return False, f"【龙湖天街】签到失败（已通过验证码）: {data.get('message', data)}"
+                    except Exception as e:
+                        print(f"✗ 解析响应失败: {e}")
+                        if attempt < max_retry - 1:
+                            continue
+                        return False, f"【龙湖天街】响应解析失败: {str(e)}"
                 else:
                     print(f"✗ 验证码处理失败")
                     # 如果不是最后一次尝试，继续重试
@@ -155,5 +177,3 @@ def longfor_sign():
 if __name__ == "__main__":
     ok, msg = longfor_sign()
     print(ok, msg)
-
-
