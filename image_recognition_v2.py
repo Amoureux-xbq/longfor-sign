@@ -9,6 +9,9 @@ from typing import Tuple, List
 import os
 
 
+_DEBUG_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
 def find_gap_position_v2(bg_image_path: str, slider_image_path: str, debug: bool = False, method: str = "shape") -> Tuple[int, int]:
     """
     改进的缺口识别算法 - 多方法融合
@@ -87,7 +90,7 @@ def find_gap_position_v2(bg_image_path: str, slider_image_path: str, debug: bool
     
     # 6. 应用偏移修正
     # 滑块起始位置的偏移量
-    OFFSET = 57
+    OFFSET = 86
     x_detected = x
     x_adjusted = max(0, x - OFFSET)
     
@@ -112,7 +115,7 @@ def find_gap_position_v2(bg_image_path: str, slider_image_path: str, debug: bool
         cv2.putText(result_img, f"Distance: {x_adjusted}px", 
                     (OFFSET + (x_detected-OFFSET)//2, y+30), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-        cv2.imwrite("debug_final_result.png", result_img)
+        cv2.imwrite(os.path.join(_DEBUG_DIR, "debug_final_result.png"), result_img)
     
     return x_adjusted, y
 
@@ -170,7 +173,7 @@ def detect_by_contour(bg: np.ndarray, slider: np.ndarray, debug: bool = False) -
     y = bg.shape[0] // 3
     
     if debug:
-        cv2.imwrite("debug_contour_edges.png", bg_edges)
+        cv2.imwrite(os.path.join(_DEBUG_DIR, "debug_contour_edges.png"), bg_edges)
         # 保存投影图
         try:
             import matplotlib
@@ -187,7 +190,7 @@ def detect_by_contour(bg: np.ndarray, slider: np.ndarray, debug: bool = False) -
             ax2.axvline(x-margin, color='r', linestyle='--')
             ax2.set_title('First Derivative')
             
-            plt.savefig('debug_contour_projection.png')
+            plt.savefig(os.path.join(_DEBUG_DIR, 'debug_contour_projection.png'))
             plt.close()
         except:
             pass
@@ -238,7 +241,7 @@ def detect_by_color_diff(bg: np.ndarray, slider: np.ndarray, debug: bool = False
             plt.axvline(best_x, color='r', linestyle='--', label=f'x={best_x}')
             plt.title('Color Standard Deviation per Column')
             plt.legend()
-            plt.savefig('debug_color_diff.png')
+            plt.savefig(os.path.join(_DEBUG_DIR, 'debug_color_diff.png'))
             plt.close()
         except:
             pass
@@ -283,16 +286,20 @@ def detect_by_shape_match(bg: np.ndarray, slider: np.ndarray, debug: bool = Fals
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
     
     x, y = max_loc
+    # 取识别框中线：(右 - 左) / 2 + 左
+    h, w = slider_edges.shape
+    x = x + w // 2
     confidence = max_val
     
     if debug:
-        cv2.imwrite("debug_shape_slider_edges.png", slider_edges)
-        cv2.imwrite("debug_shape_bg_edges.png", bg_edges)
+        cv2.imwrite(os.path.join(_DEBUG_DIR, "debug_shape_slider_edges.png"), slider_edges)
+        cv2.imwrite(os.path.join(_DEBUG_DIR, "debug_shape_bg_edges.png"), bg_edges)
         
-        # 在结果上标记
+        # 在结果上标记（x 已是中线，还原左右边界用于绘制矩形）
         result_img = bg.copy()
-        h, w = slider_edges.shape
-        cv2.rectangle(result_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        x_left = x - w // 2
+        cv2.rectangle(result_img, (x_left, y), (x_left + w, y + h), (0, 255, 0), 2)
+        cv2.line(result_img, (x, y), (x, y + h), (0, 0, 255), 2)
         cv2.imwrite("debug_shape_match.png", result_img)
     
     return x, y, confidence
