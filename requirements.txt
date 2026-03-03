@@ -4,8 +4,4 @@ Pillow>=10.0.0
 # 验证码图像识别相关
 opencv-python>=4.8.0
 numpy>=1.24.0
-scipy>=1.10.0
 matplotlib>=3.7.0
-
-# AC 参数生成（需要 Node.js）
-PyExecJS>=1.5.1

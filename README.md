@@ -13,7 +13,7 @@
 
 ## 🚀 快速开始
 
-### 方式1：GitHub Actions（推荐）
+### 方式1：GitHub Actions（不符合Actions使用规范）
 
 #### 1. Fork 本仓库
 
@@ -31,7 +31,7 @@
 | `DXRISK_TOKEN` | 顶象风控 token | ✅ |
 | `BARK_KEY` | Bark 推送 key | ⭕ 可选 |
 
-**获取 Token 方法**：使用微信开发者工具打开龙湖天街小程序，在 Network 面板中查看请求头。
+**获取 Token 方法**：使用抓包工具监测，打开龙湖天街小程序，在工具中查看请求头。
 
 详细配置步骤请查看：[GitHub Actions 配置指南](./GITHUB_ACTIONS_SETUP.md)
 
@@ -41,7 +41,7 @@
 
 #### 4. 完成！
 
-脚本将在每天 9-15 点之间随机选择一个时刻自动运行。
+脚本将在每天 9 点自动运行。
 
 ---
 
@@ -99,10 +99,6 @@ longfor-sign/
 ├── requirements.txt            # Python 依赖
 ├── .github/workflows/          # GitHub Actions 配置
 │   └── daily-sign.yml         # 定时签到工作流
-├── README.md                   # 本文件
-├── GITHUB_ACTIONS_SETUP.md    # GitHub Actions 详细配置
-├── CALCULATE_XY_USAGE.md      # X/Y 坐标计算工具使用指南 🆕
-└── AC_ENCODER_README.md       # AC 参数技术文档
 ```
 
 ---
@@ -118,28 +114,12 @@ longfor-sign/
 5. **AC 编码**：根据 greenseer.js 逻辑编码环境信息和轨迹
 6. **提交验证**：提交 AC 参数和坐标完成验证
 
-详细技术文档：[AC_ENCODER_README.md](./AC_ENCODER_README.md)
-
 ### 核心算法
 
 - **图像识别**：OpenCV 模板匹配 (TM_CCOEFF_NORMED)
 - **偏移修正**：检测位置 - 60px = 实际滑动距离
 - **轨迹生成**：三次贝塞尔曲线 + 随机抖动 + 回弹
 - **AC 编码**：完整实现 greenseer.js 的所有环境检测和加密
-
----
-
-## 📊 运行时间表
-
-| 触发时间 | 随机延迟 | 实际运行时间 | 频率 |
-|---------|---------|------------|------|
-| 北京时间 9:00 | 0-6 小时 | 9:00 - 15:00 之间随机 | 每天一次 |
-
-**说明**：
-- 每天早上 9 点触发
-- 随机延迟 0-6 小时后执行
-- 最终在 9-15 点之间的任意时刻运行
-- 避免固定时间被检测
 
 ---
 
@@ -151,13 +131,9 @@ longfor-sign/
    - 使用 GitHub Secrets 存储敏感信息
 
 2. **验证码识别**
-   - 识别成功率约 85-95%
+   - 识别成功率约 90-95%
    - 失败后会在下次运行时重试
    - 可查看 Actions 日志定位问题
-
-3. **运行策略**
-   - 每天只运行 1 次，避免频繁请求
-   - 9-15 点之间随机时刻，避免固定时间被检测
 
 ---
 
@@ -210,8 +186,6 @@ python calculate_xy.py restored_bg.jpg slider.png auto
 - `滑块图`：PNG 格式的滑块图片
 - `方法`：可选，`shape`（推荐）/`auto`/`contour`/`color`
 
-详细说明见：[CALCULATE_XY_USAGE.md](./CALCULATE_XY_USAGE.md)
-
 ### 测试图像识别
 
 ```bash
@@ -224,17 +198,18 @@ python test_recognition.py <背景图> <滑块图> [期望x坐标]
 python main.py
 ```
 
+使用`.env` 文件时：
+
+```bash
+set -a; source .env; set +a                                               
+python main.py
+```
+
 ---
 
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
-
----
-
-## 📄 许可证
-
-MIT License
 
 ---
 
@@ -245,5 +220,3 @@ MIT License
 - GitHub Actions 自动化
 
 ---
-
-**祝签到顺利！** 🎉
