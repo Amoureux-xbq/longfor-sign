@@ -32,17 +32,15 @@ jobs:
         env:
           LONGFOR_TOKEN: ${{ secrets.LONGFOR_TOKEN }}
           LONGFOR_DXRISK_TOKEN: ${{ secrets.LONGFOR_DXRISK_TOKEN }}
-          BARK_KEY: ${{ secrets.BARK_KEY }}
-          BARK_SERVER: ${{ vars.BARK_SERVER }}
-          SAVE_CAPTCHA_IMAGES: 'true'  # 启用图片保存功能
+          DINGTALK_WEBHOOK: ${{ secrets.DINGTALK_WEBHOOK }}
         run: |
           python main.py
-      
+
       - name: 上传验证码图片
-        if: always()  # 即使签到失败也上传
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: captcha-images-${{ github.run_number }}
           path: captcha_collection/
-          retention-days: 30  # 保留30天
-          if-no-files-found: ignore  # 如果没有文件也不报错
+          retention-days: 30
+          if-no-files-found: ignore
