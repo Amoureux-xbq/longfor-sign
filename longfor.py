@@ -1,5 +1,38 @@
 import os
 import requests
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+
+def get_user_info(token: str) -> dict:
+    """
+    查询用户信息
+    返回: {"growth": 积分, "level": 等级, "next_growth": 下一级所需积分}
+    """
+    url = "https://gw2c-hw-open.longfor.com/supera/member/api/bff/pages/v1_25_0/v1/user-info"
+    headers = {
+        "X-Gaia-Api-Key": "98717e7a-a039-46af-8143-be7558a089c0",
+        "lmToken": token,
+        "X-LF-Bucode": "C20400",
+        "X-LF-Api-Version": "v1_25_0",
+        "X-LF-Channel": "C2",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF WindowsWechat(0x63090a13) UnifiedPCWindowsWechat(0xf254162e) XWEB/18163",
+        "Content-Type": "application/json",
+    }
+    try:
+        resp = requests.get(url, headers=headers, timeout=10)
+        data = resp.json()
+        user_data = data.get("data", {})
+        return {
+            "growth": int(user_data.get("growthValue", 0)),
+            "level": user_data.get("levelName", ""),
+            "next_growth": int(user_data.get("nextLevelGrowthValue", 0)),
+        }
+    except Exception as e:
+        print(f"获取用户信息失败: {e}")
+        return {"growth": 0, "level": "", "next_growth": 0}
 
 
 def longfor_sign_single(token: str, dxrisk_token: str, max_retry: int = 2):
@@ -19,7 +52,8 @@ def longfor_sign_single(token: str, dxrisk_token: str, max_retry: int = 2):
         "Content-Type": "application/json;charset=UTF-8",
         "Origin": "https://longzhu.longfor.com",
         "Referer": "https://longzhu.longfor.com/",
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.67(0x18004330) NetType/WIFI Language/en miniProgram/wx50282644351869da",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS "
+                      "18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.67(0x18004330) NetType/WIFI Language/en miniProgram/wx50282644351869da",
         "token": token,
         "X-LF-UserToken": token,
         "X-GAIA-API-KEY": "c06753f1-3e68-437d-b592-b94656ea5517",
@@ -150,26 +184,28 @@ def longfor_sign():
     if len(tokens) == 1:
         dxrisk_token = dxrisk_tokens[0] if dxrisk_tokens else ""
         success, msg = longfor_sign_single(tokens[0], dxrisk_token)
-        return success, msg, 1 if success else 0, 1
-    
+        user_info = get_user_info(tokens[0])
+        return success, msg, 1 if success else 0, 1, user_info
+
     # 多个token的情况
     results = []
     success_count = 0
     total_count = len(tokens)
+    total_growth = 0
     
     for i, token in enumerate(tokens):
         # 获取对应的dxrisk_token，如果没有足够的则使用第一个或空字符串
         dxrisk_token = dxrisk_tokens[i] if i < len(dxrisk_tokens) else (dxrisk_tokens[0] if dxrisk_tokens else "")
-        
+
         print(f"\n处理第 {i+1}/{len(tokens)} 个账号...")
         success, msg = longfor_sign_single(token, dxrisk_token)
-        results.append(f"账号{i+1}: {msg}")
-        
+        user_info = get_user_info(token)
+        results.append(f"账号{i+1}: {msg}\n等级: {user_info['level']}  积分: {user_info['growth']}  距下一级还需: {user_info['next_growth']}")
+
         if success:
             success_count += 1
     
     combined_msg = "\n".join(results)
-    # 返回成功状态和详细信息（包含成功数量）
     all_success = (success_count == total_count)
     return all_success, combined_msg, success_count, total_count
 
